@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My Expenses – Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">My Expenses</h2>
+    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">+ Add Expense</a>
+</div>
+
+{% if expenses %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Title</th>
+                    <th>Amount</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Notes</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr>
+                    <td>{{ expense.title }}</td>
+                    <td>₹{{ "%.2f"|format(expense.amount) }}</td>
+                    <td>{{ expense.category }}</td>
+                    <td>{{ expense.date }}</td>
+                    <td>{{ expense.notes or '—' }}</td>
+                    <td>
+                        <form method="POST"
+                              action="{{ url_for('delete_expense', expense_id=expense.id) }}"
+                              class="delete-form d-inline">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        No expenses recorded yet. <a href="{{ url_for('add_expense') }}">Add your first expense</a>.
+    </div>
+{% endif %}
+{% endblock %}

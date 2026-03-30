@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – Expense Tracker{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Dashboard</h2>
+
+<!-- Smart Notification Banner -->
+{% if has_tracking %}
+    {% if indicator == "exceeded" %}
+        <div class="alert alert-danger" role="alert">
+            <strong>🔴 Budget Exceeded!</strong>
+            Your expenses have reached or exceeded your monthly budget.
+            You have spent {{ expense_pct }}% of ₹{{ "%.2f"|format(budget) }}.
+        </div>
+    {% elif indicator == "warning" %}
+        <div class="alert alert-danger" role="alert">
+            <strong>🔴 Warning!</strong>
+            You have used {{ expense_pct }}% of your monthly budget.
+            Spend the remaining amount wisely.
+        </div>
+    {% elif indicator == "caution" %}
+        <div class="alert alert-warning" role="alert">
+            <strong>🟡 Caution!</strong>
+            You have used {{ expense_pct }}% of your monthly budget.
+            Keep an eye on your spending.
+        </div>
+    {% else %}
+        <div class="alert alert-success" role="alert">
+            <strong>🟢 Healthy Spending!</strong>
+            You have used {{ expense_pct }}% of your monthly budget.
+            You are managing your expenses well.
+        </div>
+    {% endif %}
+{% endif %}
+
+<!-- Budget Progress Bar & Cycle Info -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Monthly Budget</h6>
+                <h3>₹{{ "%.2f"|format(budget) }}</h3>
+                {% if has_tracking %}
+                    <div class="progress mt-2 budget-bar">
+                        <div class="progress-bar
+                            {% if expense_pct >= 80 %}bg-danger
+                            {% elif expense_pct >= 60 %}bg-warning
+                            {% else %}bg-success{% endif %}"
+                             role="progressbar"
+                             style="width: {{ [expense_pct, 100]|min }}%"
+                             aria-valuenow="{{ expense_pct }}"
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ expense_pct }}%
+                        </div>
+                    </div>
+                    <small class="text-muted mt-1 d-block">
+                        ₹{{ "%.2f"|format(monthly) }} spent of ₹{{ "%.2f"|format(budget) }}
+                    </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if cycle_info %}
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="text-muted">Cycle Information</h6>
+                <ul class="list-unstyled mb-0">
+                    <li><strong>Week resets in:</strong> {{ cycle_info.days_left_week }} day(s)</li>
+                    <li><strong>Month resets in:</strong> {{ cycle_info.days_left_month }} day(s)</li>
+                    <li><strong>Quarter resets in:</strong> {{ cycle_info.days_left_quarter }} day(s)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Spending Summary Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-white bg-primary shadow-sm h-100">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Daily Expense</h6>
+                <h3 class="card-title mb-0">₹{{ "%.2f"|format(daily) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-white bg-info shadow-sm h-100">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Weekly Expense</h6>
+                <h3 class="card-title mb-0">₹{{ "%.2f"|format(weekly) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-white bg-success shadow-sm h-100">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Monthly Expense</h6>
+                <h3 class="card-title mb-0">₹{{ "%.2f"|format(monthly) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card text-white bg-warning shadow-sm h-100">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Quarterly Expense</h6>
+                <h3 class="card-title mb-0">₹{{ "%.2f"|format(quarterly) }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row: Pie Chart + Weekly Bar Graph -->
+{% if has_tracking %}
+<div class="row mb-4">
+    <!-- Expense Categories Pie Chart -->
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Expense Categories</h5>
+                {% if categories %}
+                    <canvas id="pieChart" height="260"></canvas>
+                {% else %}
+                    <p class="text-muted">No category data this month cycle.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Spending Bar Graph -->
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Weekly Spending</h5>
+                <canvas id="barChart" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Category Breakdown + Recent Expenses -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Monthly Spending by Category</h5>
+                {% if categories %}
+                    {% for cat in categories %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>{{ cat.emoji }} {{ cat.name }}</span>
+                                <span>₹{{ "%.2f"|format(cat.total) }} ({{ cat.percent }}%)</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {{ cat.percent }}%"
+                                     aria-valuenow="{{ cat.percent }}"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No expenses this month cycle.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Recent Expenses</h5>
+                {% if recent %}
+                    <ul class="list-group list-group-flush">
+                        {% for exp in recent %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ exp.title }}</strong>
+                                    <small class="text-muted d-block">
+                                        {{ exp.category }} · {{ exp.date }}
+                                    </small>
+                                </div>
+                                <span class="text-nowrap">₹{{ "%.2f"|format(exp.amount) }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No expenses yet. Start by adding one!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+{% if has_tracking %}
+<script>
+    // Wait for Chart.js to load
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // Pie Chart – Expense Categories
+        var pieCanvas = document.getElementById("pieChart");
+        if (pieCanvas) {
+            var pieLabels = {{ pie_labels | safe }};
+            var pieValues = {{ pie_values | safe }};
+            var pieColors = [
+                "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
+                "#9966FF", "#FF9F40", "#C9CBCF", "#7BC8A4"
+            ];
+
+            new Chart(pieCanvas, {
+                type: "pie",
+                data: {
+                    labels: pieLabels,
+                    datasets: [{
+                        data: pieValues,
+                        backgroundColor: pieColors.slice(0, pieValues.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "bottom" }
+                    }
+                }
+            });
+        }
+
+        // Bar Chart – Weekly Spending (Mon–Sun)
+        var barCanvas = document.getElementById("barChart");
+        if (barCanvas) {
+            var dayLabels = {{ day_labels | safe }};
+            var dayValues = {{ day_values | safe }};
+
+            new Chart(barCanvas, {
+                type: "bar",
+                data: {
+                    labels: dayLabels,
+                    datasets: [{
+                        label: "Spending (₹)",
+                        data: dayValues,
+                        backgroundColor: "#36A2EB",
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return "₹" + value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

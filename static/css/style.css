@@ -1,0 +1,65 @@
+/* ============================================================
+   Expense Tracker – Custom Styles
+   Minimal CSS to complement Bootstrap 5
+   ============================================================ */
+
+/* Body spacing so content doesn't stick to the navbar */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #FFF5E6;
+}
+
+main {
+    flex: 1;
+}
+
+/* Card subtle shadow */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+/* Auth pages – center the form card vertically */
+.row.justify-content-center {
+    margin-top: 3rem;
+}
+
+/* Table amount column */
+td:nth-child(2) {
+    font-weight: 600;
+}
+
+/* Progress bar height */
+.progress {
+    height: 0.6rem;
+}
+
+/* Budget progress bar – taller */
+.card-body .progress {
+    height: 1rem;
+    border-radius: 0.5rem;
+}
+
+/* Flash alert spacing */
+.flash-alert {
+    margin-bottom: 0;
+}
+
+/* Navbar brand icon spacing */
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* Dashboard summary cards text */
+.card-subtitle {
+    opacity: 0.85;
+    font-weight: 400;
+}
+
+/* Indicator banners */
+.alert-success strong,
+.alert-danger strong {
+    margin-right: 0.25rem;
+}
